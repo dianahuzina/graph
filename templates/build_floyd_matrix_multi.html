@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Матрица Флойда-Уоршелла мультиграфа</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <div class="container mt-5">
+    <h2>Введите рёбра мультиграфа для алгоритма Флойда-Уоршелла</h2>
+    <form action="/draw_floyd_multi" method="post" class="border p-4 rounded shadow">
+        <div class="form-group">
+        <textarea id="graph_data" name="graph_data" rows="10" cols="30" placeholder="Вершина1 Вершина2 вес (каждое ребро с новой строки):"></textarea><br>
+        </div>
+        <div class="form-group" style="margin-bottom: 5px">
+                <label>Загрузить текстовый файл (.txt):</label>
+                <input type="file"
+                    class="form-control-file"
+                    accept=".txt"
+                    onchange="loadFileToTextarea(this)">
+            </div>
+            <div class="form-group" style="margin-bottom: 5px">
+                <label>Загрузить JSON-файл (.json):</label>
+                <input type="file"
+                    class="form-control-file"
+                    accept=".json"
+                    onchange="loadFileToTextarea(this)">
+            </div>
+        <div class="form-group">
+                <label>Тип графа:</label>
+                <select name="graph_type" class="form-control">
+                    <option value="undirected">Неориентированный</option>
+                    <option value="directed">Ориентированный</option>
+                </select>
+            </div>
+        <br>
+        <input type="hidden" name="input_type" value="edges">
+        <input type="submit" value="Построить матрицу Флойда-Уоршелла">
+    </form>
+    </div>
+    <br><a href="/">Вернуться на главную</a>
+<script src="/static/js/load_graph_file.js"></script>
+</body>
+</html>

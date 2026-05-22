@@ -1,0 +1,140 @@
+<!-- templates/interactive_embed.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Интерактивный граф</title>
+    
+    <!-- Cytoscape.js -->
+    <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+    
+    <!-- Экспорт в PNG -->
+    <script src="https://unpkg.com/dom-to-image-more@2.9.0/dist/dom-to-image-more.min.js"></script>
+    
+    <style>
+        .interactive-graph-container {
+            position: relative;
+            border: 2px solid #35424a;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            width: 100%;
+            height: 600px;
+            overflow: hidden;
+        }
+        
+        .graph-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+        
+        .graph-controls .btn {
+            margin: 2px;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        #cy-embedded {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="interactive-graph-container">
+        <div class="graph-controls">
+            <button id="save-as-image" class="btn btn-success">📷 Сохранить</button>
+            <button id="reset-view" class="btn btn-secondary">🗘 Сброс</button>
+        </div>
+        <div id="cy-embedded"></div>
+    </div>
+
+    <script>
+        // Получаем данные из глобальной переменной
+        const graphData = window.embeddedGraphData || {
+            nodes: [],
+            edges: []
+        };
+        const graphType = window.embeddedGraphType || 'undirected';
+        
+        // Инициализация Cytoscape
+        const cy = cytoscape({
+            container: document.getElementById('cy-embedded'),
+            
+            elements: graphData,
+            
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'label': 'data(label)',
+                        'background-color': 'data(color)',
+                        'text-valign': 'center',
+                        'color': '#000',
+                        'font-size': 12,
+                        'width': 40,
+                        'height': 40
+                    }
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 2,
+                        'line-color': 'data(color)',
+                        'curve-style': 'bezier'
+                    }
+                },
+                {
+                    selector: '.directed',
+                    style: {
+                        'target-arrow-color': 'data(color)',
+                        'target-arrow-shape': 'triangle',
+                        'curve-style': 'bezier',
+                        'target-arrow-fill': 'filled'
+                    }
+                }
+            ],
+            
+            layout: {
+                name: 'cose',
+                animate: true,
+                animationDuration: 500
+            },
+            
+            userPanningEnabled: true,
+            userZoomingEnabled: true,
+            minZoom: 0.1,
+            maxZoom: 5,
+            wheelSensitivity: 0.2
+        });
+        
+        // Если граф ориентированный, добавляем класс к рёбрам
+        if (graphType === 'directed') {
+            cy.edges().addClass('directed');
+        }
+        
+        // Кнопка сохранения как изображения
+        document.getElementById('save-as-image').onclick = function() {
+            const node = document.getElementById('cy-embedded');
+            
+            domtoimage.toPng(node)
+                .then(function(dataUrl) {
+                    const link = document.createElement('a');
+                    link.download = 'graph.png';
+                    link.href = dataUrl;
+                    link.click();
+                })
+                .catch(function(error) {
+                    console.error('Ошибка при сохранении:', error);
+                    alert('Ошибка при сохранении изображения');
+                });
+        };
+        
+        // Кнопка сброса вида
+        document.getElementById('reset-view').onclick = function() {
+            cy.fit().center();
+        };
+    </script>
+</body>
+</html>

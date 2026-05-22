@@ -1,0 +1,13 @@
+{% extends "result_base.html" %}
+
+{% block title %}Матрица количества путей мультиграфа{% endblock %}
+
+{% block page_title %}Матрица количества путей мультиграфа{% endblock %}
+
+{% block page_type %}
+<div id="page-type" data-type="matrix" style="display:none"></div>
+{% endblock %}
+
+{% block content %}
+    {{ q_paths_matrix_multi|safe }}
+{% endblock %}

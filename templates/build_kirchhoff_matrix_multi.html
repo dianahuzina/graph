@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Построить матрицу Кирхгофа мультиграфа</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h2>Построить матрицу Кирхгофа мультиграфа</h2>
+        <form action="/draw_kirchhoff_matrix_multi" method="post">
+            <div class="form-group">
+                <textarea id="graph_data" name="graph_data" class="form-control" rows="10" placeholder="Введите данные мультиграфа (ребра/матрицы):"></textarea>
+            </div>
+            <div class="form-group" style="margin-bottom: 5px">
+                <label>Загрузить текстовый файл (.txt):</label>
+                <input type="file"
+                    class="form-control-file"
+                    accept=".txt"
+                    onchange="loadFileToTextarea(this)">
+            </div>
+            <div class="form-group" style="margin-bottom: 5px">
+                <label>Загрузить JSON-файл (.json):</label>
+                <input type="file"
+                    class="form-control-file"
+                    accept=".json"
+                    onchange="loadFileToTextarea(this)">
+            </div>
+            <div class="form-group" style="margin-bottom: 5px">
+                <label>Тип мультиграфа:</label>
+                <select name="graph_type" class="form-control">
+                    <option value="undirected">Неориентированный</option>
+                    <option value="directed">Ориентированный</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Тип входных данных:</label>
+                <select name="input_type" class="form-control">
+                    <option value="edges">Ребра</option>
+                    <option value="adjacency_matrix">Матрица смежности</option>
+                    <option value="incidence_matrix">Матрица инцидентности</option>
+                </select>
+            </div>
+            <br><input type="submit" value="Построить матрицу Кирхгофа мультиграфа">
+        </form>
+        <br><a href="/" class="btn-secondary">Вернуться на главную</a>
+    </div>
+<script src="/static/js/load_graph_file.js"></script>
+</body>
+</html>

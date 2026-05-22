@@ -1,0 +1,13 @@
+{% extends "result_base.html" %}
+
+{% block title %}Матрица инцидентности графа{% endblock %}
+
+{% block page_title %}Матрица инцидентности графа{% endblock %}
+
+{% block page_type %}
+<div id="page-type" data-type="matrix" style="display:none"></div>
+{% endblock %}
+
+{% block content %}
+    {{ incidence_matrix|safe }}
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "result_base.html" %}
+
+{% block title %}Весовая матрица{% endblock %}
+
+{% block page_title %}Весовая матрица{% endblock %}
+
+{% block page_type %}
+<div id="page-type" data-type="matrix" style="display:none"></div>
+{% endblock %}
+
+{% block content %}
+    {{ weight_matrix|safe }}
+{% endblock %}

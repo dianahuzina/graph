@@ -1,0 +1,13 @@
+{% extends "result_base.html" %}
+
+{% block title %}Матрица смежности мультиграфа{% endblock %}
+
+{% block page_title %}Матрица смежности мультиграфа{% endblock %}
+
+{% block page_type %}
+<div id="page-type" data-type="matrix" style="display:none"></div>
+{% endblock %}
+
+{% block content %}
+    {{ adj_matrix_multi|safe }}
+{% endblock %}

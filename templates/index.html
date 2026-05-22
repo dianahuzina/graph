@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Графическое приложение</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <div class="container mt-5" style="text-align: center;">
+        <h1 class="text-center mb-4"></h1>
+
+        <div class="d-flex flex-column align-items-center">
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_graph'">Построить граф</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_multigraph'">Построить мультиграф</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_adjacency_matrix'">Построить матрицу смежности графа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_adj_matrix_multi'">Построить матрицу смежности мультиграфа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_incidence_matrix'">Построить матрицу инцидентности графа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_inc_matrix_multi'">Построить матрицу инцидентности мультиграфа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_q_paths_matrix'">Построить матрицу количества путей графа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_q_paths_matrix_multi'">Построить матрицу количества путей мультиграфа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_path_matrix'">Построить матрицу путей графа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/interactive_graph'">Интерактивное построение графа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_kirchhoff_matrix'">Построить матрицу Кирхгофа графа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_kirchhoff_matrix_multi'">Построить матрицу Кирхгофа мультиграфа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_weight_matrix'">Построить весовую матрицу графа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_weight_matrix_multi'">Построить весовую матрицу мультиграфа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_floyd_matrix'">Построить матрицу Флойда-Уоршелла графа</button>
+                <button class="btn btn-success btn-lg mb-3" style="width: 600px; margin-bottom: 5px"
+                        onclick="location.href='/build_floyd_matrix_multi'">Построить матрицу Флойда-Уоршелла мультиграфа</button>
+        </div>
+    </div>
+</body>
+</html>

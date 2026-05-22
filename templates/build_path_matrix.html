@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Построить матрицу путей графа</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h2>Введите рёбра графа для построения матрицы путей</h2>
+    <form action="/draw_path_matrix" method="post">
+        <textarea id="graph_data" name="graph_data" rows="10" cols="30" placeholder="Вершина1 Вершина2 вес (каждое ребро с новой строки):"></textarea>
+        <br>
+            <div class="form-group" style="margin-bottom: 5px">
+                <label>Загрузить текстовый файл (.txt):</label>
+                <input type="file"
+                    class="form-control-file"
+                    accept=".txt"
+                    onchange="loadFileToTextarea(this)">
+            </div>
+            <div class="form-group" style="margin-bottom: 5px">
+                <label>Загрузить JSON-файл (.json):</label>
+                <input type="file"
+                    class="form-control-file"
+                    accept=".json"
+                    onchange="loadFileToTextarea(this)">
+            </div>
+        <label>Введите длину путей k:</label>
+        <input type="number" name="path_criteria" placeholder="Введите значение k" required>
+        <br>
+        <label>Тип графа:</label>
+        <select name="graph_type">
+            <option value="undirected">Неориентированный</option>
+            <option value="directed">Ориентированный</option>
+        </select>
+        <br>
+        <input type="hidden" name="input_type" value="edges">
+        <br><input type="submit" value="Построить матрицу путей графа">
+    </form>
+    <br><a href="/">Вернуться на главную</a>
+<script src="/static/js/load_graph_file.js"></script>
+</body>
+</html>

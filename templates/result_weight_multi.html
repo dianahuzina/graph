@@ -1,0 +1,11 @@
+{% extends "result_base.html" %}
+{% block title %}Весовая матрица мультиграфа{% endblock %}
+{% block page_title %}Весовая матрица мультиграфа (min веса){% endblock %}
+{% block page_type %}
+<div id="page-type" data-type="matrix" style="display:none"></div>
+{% endblock %}
+{% block content %}
+    <div class="table-responsive">
+        {{ weight_matrix|safe }}
+    </div>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "result_base.html" %}
+
+{% block title %}Матрица Кирхгофа мультиграфа{% endblock %}
+
+{% block page_title %}Матрица Кирхгофа мультиграфа{% endblock %}
+
+{% block page_type %}
+<div id="page-type" data-type="matrix" style="display:none"></div>
+{% endblock %}
+
+{% block content %}
+    {{ kirchhoff_matrix|safe }}
+{% endblock %}

@@ -1,0 +1,1898 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Граф{% endblock %}</title>
+    
+    <script src="https://unpkg.com/cytoscape@3.26.0/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-svg@0.4.0/cytoscape-svg.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/styles.css">
+    
+    <style>
+        html, body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+        }
+        
+        .container {
+            padding: 20px 10px 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+        
+        .instructions {
+            background-color: #f1f8ff;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .instructions ul {
+            margin-bottom: 0;
+            line-height: 1.3;
+        }
+        
+        .instructions li {
+            margin-bottom: 4px;
+        }
+        
+        .instructions li:last-child {
+            margin-bottom: 0;
+        }
+        
+        .instructions-toggle {
+            cursor: pointer;
+            color: #3498db;
+            font-weight: bold;
+            margin: 10px 0;
+            display: inline-block;
+            font-size: 16px;
+        }
+        
+        .instructions-toggle:hover {
+            text-decoration: underline;
+        }
+        
+        .status-bar {
+            background-color: #35424a;
+            color: white;
+            padding: 8px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            min-height: 20px;
+        }
+        
+        .btn-column {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            width: 100%;
+            font-size: 13px;
+        }
+        
+        .btn-warning.active {
+            background-color: #e0a800;
+            border-color: #d39e00;
+            color: #fff;
+        }
+        
+        .main-container {
+            display: grid;
+            grid-template-columns: 266px 1fr;
+            gap: 20px;
+            flex: 1;
+            min-height: 0;
+        }
+        
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+        
+        .cy-container {
+            border: 2px solid #35424a;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #cy {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        
+        .color-control-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .color-control-group .color-btn {
+            flex: 1;
+            margin-top: 0;
+            padding: 5px 10px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .color-control-group .color-input {
+            width: 40px;
+            height: 25px;
+            padding: 0;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .navigation-container {
+            text-align: center;
+            padding: 15px 0;
+            margin-top: 15px;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+        
+        .matrix-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 0 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            overflow: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 8px;
+            text-align: center;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        h2 {
+            font-size: 22px;
+            color: #333;
+            padding-bottom: 8px;
+            text-align: center;
+        }
+        
+        .selected {
+            background-color: #ffc107 !important;
+            border-color: #e0a800 !important;
+        }
+        
+        .weight-input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .weight-input {
+            flex: 0.5;
+            padding: 5px 8px;
+            font-size: 12px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            min-width: 0;
+        }
+        
+        .weight-btn {
+            flex: 1;
+            padding: 5px 8px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .btn-group.dropright {
+            position: relative;
+            z-index: 2000;
+            width: 100%;
+        }
+        .btn-group.dropright > .btn { width: 100%; }
+
+        .dropdown-submenu {
+        position: relative;
+        }
+
+        .dropdown-submenu .submenu {
+            display: none;
+            position: absolute;
+            left: 100%;
+            bottom: 0;
+            margin-left: 18px;
+            z-index: 2200;
+        }
+
+        .dropdown-submenu .submenu.show {
+            display: block;
+        }
+
+        .btn-group.dropright .dropdown-menu {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: auto !important;
+            bottom: 0 !important;
+            margin-left: 18px;
+            z-index: 2100;
+            background-color: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.15);
+            border-radius: 0.25rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
+        }
+
+        .btn-group.dropright .dropdown-menu.show { display: block; }
+
+        .dropdown-item {
+            display: block;
+            padding: 0.25rem 1.5rem;
+            font-weight: 400;
+            color: #212529;
+            text-decoration: none;
+            white-space: nowrap;
+            background-color: transparent;
+            border: 0;
+            font-size: 14px;
+        }
+
+        .dropdown-item:hover {
+            color: #16181b;
+            background-color: #f8f9fa;
+        }
+
+        #matrixModal {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 0 !important;
+            height: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+        }
+
+        #matrixModal .modal-dialog {
+            position: absolute !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            transform: none !important;
+            z-index: 9999;
+            display: block !important;
+            max-width: 95vw;
+            width: auto;
+        }
+
+        .modal-backdrop {
+            display: none !important;
+        }
+
+        body.modal-open {
+            overflow: auto !important;
+            padding-right: 0 !important;
+        }
+
+        #matrixModal .modal-content {
+            min-width: 250px;
+            background: #fff !important;
+            opacity: 1 !important;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+        }
+
+        #matrixModalBody {
+            overflow-x: auto;
+        }
+
+        #matrixModal .modal-title {
+            margin: 0;
+            text-align: center;
+            font-size: 16px;
+            width: 100%;
+            padding-top: 10px;
+        }
+
+        #matrixModal .modal-header,
+        #matrixModal .modal-body {
+            text-align: center;
+            overflow: hidden;
+        }
+
+        #matrixModal .modal-body table {
+            margin: 0 auto;
+            font-size: 16px;
+        }
+
+        #matrixModal .modal-body th,
+        #matrixModal .modal-body td {
+            padding: 0.35rem 0.5rem;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        #matrixModal .modal-footer {
+            padding: 10px;
+            text-align: center;
+        }
+
+        #matrixModal .modal-footer .btn {
+            width: auto !important;
+            min-width: 0 !important;
+            padding: 0.375rem 0.75rem;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        #matrixTableWrap {
+            max-height: 70vh;
+        }
+
+        #matrixModal .modal-body {
+        padding: 16px !important;
+        }
+
+        #matrixModal .modal-dialog,
+        #matrixModal .modal-content,
+        #matrixModal table {
+        box-sizing: border-box;
+        }
+
+        #matrixModal table {
+        margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    {% block page_type %}
+    <div id="page-type" data-type="graph" style="display:none"></div>
+    {% endblock %}
+
+    <div id="graph-data"
+         data-nodes='{{ nodes|tojson|safe }}'
+         data-edges='{{ edges|tojson|safe }}'
+         data-graph-type='{{ graph_type }}'
+         style="display: none;">
+    </div>
+    
+    <div class="container">
+        <div class="content-wrapper">
+            <div class="matrix-title">
+                <h2>{% block page_title %}Заголовок{% endblock %}</h2>
+            </div>
+
+            <div class="matrix-container" id="matrix-container">
+                {% block content %}{% endblock %}
+            </div>
+
+            <div id="instructions" class="instructions">
+                <div style="font-weight: bold; margin-bottom: 8px; font-size: 14px;">Инструкция по использованию:</div>
+                <ul style="line-height: 1.3;">
+                    <li><strong>Добавить вершину:</strong> Нажмите кнопку "Добавить вершину", затем кликните на поле графа, чтобы добавить вершину</li>
+                    <li><strong>Добавить ребро:</strong> Нажмите кнопку "Добавить ребро", затем выберите первую вершину, затем вторую, чтобы добавить ребро между этими вершинами</li>
+                    <li><strong>Удалить вершину:</strong> Нажмите кнопку "Удалить вершину", затем кликните на вершину, чтобы удалить ее</li>
+                    <li><strong>Удалить ребро:</strong> Нажмите кнопку "Удалить ребро", затем кликните на ребро, чтобы удалить его</li>
+                    <li><strong>Переименовать вершину:</strong> Нажмите "Переименовать вершину", затем кликните на вершину, чтобы поменять ее имя</li>
+                    <li><strong>Изменить цвет вершины:</strong> Нажмите "Изменить цвет вершины", затем кликните на вершину, чтобы изменить ее цвет</li>
+                    <li><strong>Изменить цвет ребра:</strong> Нажмите "Изменить цвет ребра", затем кликните на ребро, чтобы поменять его цвет</li>
+                    <li><strong>Изменить вес:</strong> Введите новый вес, нажмите "Изменить вес", затем кликните на ребро, чтобы добавить ему вес</li>
+                    <li><strong>Удалить вес:</strong> Нажмите "Удалить вес", затем кликните на ребро, чтобы удалить его вес</li>
+                    <li><strong>Тип графа:</strong> Выберите "Ориентированный" или "Неориентированный"</li>
+                    <li><strong>Очистить граф:</strong> Кнопка "Очистить граф" удалит все элементы</li>
+                    <li><strong>Сохранить как:</strong> Сохраняет граф в формате PNG/SVG/JSON/TXT</li>
+                    <li><strong>Алгоритмы: </strong> Выберите "Матрицы", чтобы построить матрицу смежности/инцидентности/... графа</li>
+                    <li><strong>Вставить граф:</strong> Вставить граф в формате JSON/TXT</li>
+                    <li><strong>Выровнять граф:</strong> Нажмите кнопку "Выровнять граф", чтобы автоматически выровнять элементы графа</li>
+                </ul>
+            </div>
+            
+            <div class="instructions-toggle" onclick="toggleInstructions()">
+                Показать/скрыть инструкции
+            </div>
+            
+            <div class="main-container">
+                <div class="left-panel">
+                    <div class="controls">
+                        <div class="buttons-container">
+                            <div class="btn-column">
+                                <button id="add-node-btn" class="btn btn-primary btn-small">Добавить вершину</button>
+                                <button id="add-edge-btn" class="btn btn-primary btn-small">Добавить ребро</button>
+                                <button id="remove-node-btn" class="btn btn-danger btn-small">Удалить вершину</button>
+                                <button id="remove-edge-btn" class="btn btn-danger btn-small">Удалить ребро</button>
+                                <button id="rename-node-btn" class="btn btn-secondary btn-small">Переименовать вершину</button>
+
+                                <div class="color-controls">
+                                    <div class="color-control-group">
+                                        <button id="change-vertex-color-btn" class="btn btn-secondary color-btn">Изменить цвет вершины</button>
+                                        <input type="color" id="vertex-color" class="color-input" value="#61bffc">
+                                    </div>
+                                    <div class="color-control-group">
+                                        <button id="change-edge-color-btn" class="btn btn-secondary color-btn">Изменить цвет ребра</button>
+                                        <input type="color" id="edge-color" class="color-input" value="#666666">
+                                    </div>
+                                </div>
+
+                                <div class="weight-controls">
+                                    <div class="weight-input-group">
+                                        <input type="number" id="weight-input" class="weight-input" placeholder="Вес" value="1" step="0.1" min="0">
+                                        <button id="change-weight-btn" class="btn btn-info weight-btn">Изменить вес</button>
+                                    </div>
+                                    <button id="remove-weight-btn" class="btn btn-warning btn-small">Удалить вес</button>
+                                </div>
+                            </div>
+                            <div class="btn-column">
+                                <button id="make-undirected" class="btn btn-warning btn-small active">Неориентированный граф</button>
+                                <button id="make-directed" class="btn btn-warning btn-small">Ориентированный граф</button>
+                                <button id="clear-btn" class="btn btn-danger btn-small">Очистить граф</button>
+
+                                <div id="saveAsGroup" class="btn-group dropright">
+                                    <button type="button" class="btn btn-success btn-small dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        Сохранить как
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="#" onclick="exportPNG()">PNG</a>
+                                        <a class="dropdown-item" href="#" onclick="exportSVG()">SVG</a>
+                                        <a class="dropdown-item" href="#" onclick="exportJSON()">JSON</a>
+                                        <a class="dropdown-item" href="#" onclick="exportTXT()">TXT</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div id="algorithmsGroup" class="btn-group dropright">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-small dropdown-toggle"
+                                    data-display="static"
+                                    data-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false">
+                                    Алгоритмы
+                                </button>
+
+                                <div class="dropdown-menu">
+                                    <div class="dropdown-submenu">
+                                        <a class="dropdown-item" href="#" id="matricesSubmenuToggle">Матрицы</a>
+
+                                        <div class="dropdown-menu submenu" style="margin-left: 8px">
+                                            <a class="dropdown-item" href="#" onclick="showMatrixModal('adj')">Матрица смежности</a>
+                                            <a class="dropdown-item" href="#" onclick="showMatrixModal('inc')">Матрица инцидентности</a>
+                                            <a class="dropdown-item" href="#" onclick="showMatrixModal('paths_count')">Количество путей (k)</a>
+                                            <a class="dropdown-item" href="#" onclick="showMatrixModal('paths')">Матрица путей (k)</a>
+                                            <a class="dropdown-item" href="#" onclick="showMatrixModal('reach')">Матрица достижимости (Уоршелл)</a>
+                                            <a class="dropdown-item" href="#" onclick="showMatrixModal('kirch')">Матрица Кирхгофа (Лапласа)</a>
+                                            <a class="dropdown-item" href="#" onclick="showMatrixModal('weight')">Весовая матрица</a>
+                                            <a class="dropdown-item" href="#" onclick="showMatrixModal('floyd')">Матрица Флойда-Уоршелла</a>
+                                        </div>
+                                    </div>
+
+                                    <a class="dropdown-item disabled" href="#" tabindex="-1" aria-disabled="true">Алгоритмы</a>
+                                </div>
+                            </div>
+
+                            <div id="loadGraphGroup" class="btn-group dropright">
+                                <button type="button"
+                                        class="btn btn-dark btn-small dropdown-toggle"
+                                        data-display="static"
+                                        data-toggle="dropdown"
+                                        aria-haspopup="true"
+                                        aria-expanded="false">
+                                    Вставить граф
+                                </button>
+
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" href="#" onclick="triggerImport('json')">JSON</a>
+                                    <a class="dropdown-item" href="#" onclick="triggerImport('txt')">TXT</a>
+                                </div>
+                            </div>
+
+                            <input type="file" id="graphFileInput" style="display:none" />
+
+                            <button id="layoutBtn" class="btn btn-dark btn-small">Выровнять граф</button>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+                <div class="right-panel">
+                    <div id="status-bar" class="status-bar">Готов к работе</div>
+                    <div class="cy-container">
+                        <div id="cy"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="navigation-container">
+            <a href="/" class="btn btn-outline-primary" style="width: 200px; font-size: 14px;">Вернуться на главную</a>
+        </div>
+    </div>
+
+    <div class="modal" id="matrixModal" data-backdrop="false" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="matrixModalLabel" aria-hidden="true" style="display: none;">
+        <div class="modal-dialog modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="matrixModalLabel">Матрица</h5>
+                </div>
+                <div class="modal-body" id="matrixModalBody">
+                    </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Закрыть</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="saveMatrixBtn">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function isMatrixAllowed() {
+            const el = document.getElementById('page-type');
+            if (!el) return false;
+            return el.dataset.type === 'matrix';
+        }
+
+        let mode = null; 
+        let firstNode = null;
+        let isDirected = false;
+        let currentVertexColor = '#61bffc';
+        let currentEdgeColor = '#666666';
+        let currentWeight = 1;
+        let cy = null;
+        let currentMatrix = null;
+        let currentMatrixType = null;
+        let currentMatrixHeaders = null;
+        let currentMatrixRowHeaders = null;
+        let currentMatrixColHeaders = null;
+        let pageMatrixType = normalizeMatrixType("{{ matrix_type }}");
+        let currentPathLength = 2;
+
+        function normalizeMatrixType(type) {
+            if (!type) return '';
+
+            const t = String(type).trim().toLowerCase();
+
+            const map = {
+                'adj': 'adj', 'adjacency': 'adj', 'adjacency_matrix': 'adj', 'matrix_adj': 'adj', 'смежности': 'adj',
+                'inc': 'inc', 'incidence': 'inc', 'incidence_matrix': 'inc', 'matrix_inc': 'inc', 'инцидентности': 'inc',
+                'paths_count': 'paths_count', 'path_count': 'paths_count', 'count_paths': 'paths_count',
+                'paths': 'paths', 'path': 'paths',
+                'reach': 'reach', 'reachability': 'reach', 'reachability_matrix': 'reach', 'warshall': 'reach',
+                'kirch': 'kirch', 'kirchhoff': 'kirch', 'laplace': 'kirch', 'laplacian': 'kirch'
+            };
+
+            return map[t] || t;
+        }
+
+        let importExpectedType = null; 
+
+        function triggerImport(type) {
+            importExpectedType = type;
+            const input = document.getElementById('graphFileInput');
+            input.value = ''; 
+            if (type === 'json') input.accept = '.json,application/json';
+            if (type === 'txt')  input.accept = '.txt,text/plain';
+            input.click();
+        }
+
+        document.getElementById('graphFileInput').addEventListener('change', function () {
+            const file = this.files && this.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const text = String(reader.result || '');
+                    const looksLikeJson = text.trim().startsWith('{') || file.name.toLowerCase().endsWith('.json');
+
+                    if (importExpectedType === 'json' || looksLikeJson) {
+                        importGraphFromJsonText(text);
+                    } else {
+                        importGraphFromTxt(text);
+                    }
+                    updateStatus(`Граф загружен из файла: ${file.name}`);
+                } catch (e) {
+                    console.error(e);
+                    alert('Не получилось загрузить граф. Проверь формат файла.');
+                }
+            };
+            reader.readAsText(file, 'utf-8');
+        });
+
+        function applyDirectedUI() {
+            if (isDirected) {
+                document.getElementById('make-directed').classList.add('active');
+                document.getElementById('make-undirected').classList.remove('active');
+                cy.edges().addClass('directed');
+                cy.edges().style('target-arrow-color', function(ele) {
+                    return ele.data('color') || currentEdgeColor;
+                });
+            } else {
+                document.getElementById('make-undirected').classList.add('active');
+                document.getElementById('make-directed').classList.remove('active');
+                cy.edges().removeClass('directed');
+                cy.edges().style('target-arrow-color', null);
+            }
+            if (isMatrixAllowed()) updateMatrix();
+        }
+
+        function importGraphFromJsonText(text) {
+            const data = JSON.parse(text);
+            if (!data || !data.elements) throw new Error('JSON должен содержать поле elements');
+            
+            cy.elements().remove();
+            
+            cy.add(data.elements);
+            
+            const nodesFromJson = data.elements.nodes || [];
+            nodesFromJson.forEach(jsonNode => {
+                const nodeId = jsonNode.data.id;
+                const nodeLabel = jsonNode.data.label || nodeId;
+                const cyNode = cy.getElementById(nodeId);
+                if (cyNode) {
+                    cyNode.data('label', nodeLabel);
+                    cyNode.trigger('data');
+                }
+            });
+            
+            cy.style().update();
+            
+            if (typeof data.directed === 'boolean') {
+                isDirected = data.directed;
+            }
+            applyDirectedUI();
+            
+            cy.layout({ name: 'preset', animate: false }).run();
+            cy.fit();
+            
+            updateStatus('Граф загружен из JSON');
+        }
+
+        function importGraphFromTxt(text) {
+            const linesRaw = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const hasMeta = linesRaw.some(l => l.startsWith('#directed=') || l.startsWith('#node ') || l.startsWith('#edge '));
+
+            if (!hasMeta) {
+                const lines = linesRaw;
+                const nodesSet = new Set();
+                const edges = [];
+
+                for (const line of lines) {
+                    const parts = line.split(/\s+/);
+                    if (parts.length < 2) continue;
+
+                    let s = parts[0];
+                    let t = parts[1];
+                    let w = (parts.length >= 3) ? parseFloat(parts[2]) : 1;
+                    if (!Number.isFinite(w)) w = 1;
+
+                    if (!isDirected && s > t) [s, t] = [t, s];
+                    nodesSet.add(s); nodesSet.add(t);
+                    edges.push({ s, t, w });
+                }
+
+                cy.elements().remove();
+                const nodes = Array.from(nodesSet);
+                nodes.forEach((id, idx) => {
+                    cy.add({
+                        data: { id, label: id, color: currentVertexColor },
+                        position: { x: 100 + (idx % 5) * 120, y: 100 + Math.floor(idx / 5) * 120 }
+                    });
+                });
+
+                edges.forEach(e => {
+                    const edgeData = {
+                        data: { source: e.s, target: e.t, color: currentEdgeColor, weight: e.w },
+                        classes: isDirected ? 'directed' : ''
+                    };
+                    if (e.w !== 1) edgeData.data.label = String(e.w);
+                    cy.add(edgeData);
+                });
+
+                applyDirectedUI();
+                return;
+            }
+
+            let directedFromFile = null;
+            const nodesMap = new Map();
+            const edgesArr = [];
+
+            for (const line of linesRaw) {
+                if (line.startsWith('#directed=')) {
+                    const v = line.substring('#directed='.length).trim();
+                    directedFromFile = (v === '1' || v.toLowerCase() === 'true');
+                    continue;
+                }
+                if (line.startsWith('#node ')) {
+                    const parts = line.split(/\s+/);
+                    if (parts.length >= 3) {
+                        const id = parts[1];
+                        const color = parts[2];
+                        let x = null, y = null;
+                        let label = id;
+                        if (parts.length >= 5) {
+                            const px = parseFloat(parts[3]);
+                            const py = parseFloat(parts[4]);
+                            if (Number.isFinite(px) && Number.isFinite(py)) {
+                                x = px; y = py;
+                            }
+                        }
+                        if (parts.length >= 6) {
+                            label = parts.slice(5).join(' '); // поддержка пробелов в имени
+                        }
+                        nodesMap.set(id, { color, x, y, label });
+                    }
+                    continue;
+                }
+                if (line.startsWith('#edge ')) {
+                    const parts = line.split(/\s+/);
+                    if (parts.length >= 5) {
+                        const s = parts[1];
+                        const t = parts[2];
+                        let w = parseFloat(parts[3]);
+                        if (!Number.isFinite(w)) w = 1;
+                        const color = parts[4];
+                        edgesArr.push({ s, t, w, color });
+                    }
+                    continue;
+                }
+            }
+
+            if (directedFromFile !== null) isDirected = directedFromFile;
+
+            const allNodes = new Set(nodesMap.keys());
+            edgesArr.forEach(e => { allNodes.add(e.s); allNodes.add(e.t); });
+
+            cy.elements().remove();
+            const nodes = Array.from(allNodes);
+            nodes.forEach((id, idx) => {
+                const info = nodesMap.get(id) || {};
+                const color = info.color || currentVertexColor;
+                const hasPos = Number.isFinite(info.x) && Number.isFinite(info.y);
+                const position = hasPos
+                    ? { x: info.x, y: info.y }
+                    : { x: 100 + (idx % 5) * 120, y: 100 + Math.floor(idx / 5) * 120 };
+
+                cy.add({ data: { id, label: info.label || id, color }, position });
+            });
+
+            edgesArr.forEach(e => {
+                let s = e.s;
+                let t = e.t;
+                if (!isDirected && s > t) [s, t] = [t, s];
+
+                const edgeData = {
+                    data: { source: s, target: t, color: e.color || currentEdgeColor, weight: e.w },
+                    classes: isDirected ? 'directed' : ''
+                };
+                if (e.w !== 1) edgeData.data.label = String(e.w);
+                cy.add(edgeData);
+            });
+
+            applyDirectedUI();
+        }
+    
+        function getNextVertexNumber() {
+            const nodes = cy.nodes();
+            if (nodes.length === 0) return 1;
+            let maxNum = 0;
+            nodes.forEach(node => {
+                const id = node.id();
+                if (id.startsWith('V')) {
+                    const num = parseInt(id.substring(1));
+                    if (!isNaN(num) && num > maxNum) maxNum = num;
+                }
+            });
+            return maxNum + 1;
+        }
+        
+        function setInitialGraphType() {
+            const dataElement = document.getElementById('graph-data');
+            const graphType = dataElement ? dataElement.dataset.graphType : 'undirected';
+            isDirected = (graphType === 'directed');
+            applyDirectedUI();
+        }
+        
+        function updateStatus(message) {
+            const statusBar = document.getElementById('status-bar');
+            if (statusBar) statusBar.textContent = message;
+        }
+        
+        function toggleInstructions() {
+            const instructions = document.getElementById('instructions');
+            instructions.style.display = (instructions.style.display === 'block') ? 'none' : 'block';
+        }
+        
+        function initGraph() {
+            const dataElement = document.getElementById('graph-data');
+            if (!dataElement) {
+                console.error("Элемент с данными графа не найден");
+                return;
+            }
+            
+            let nodes, edges, graphType;
+            try {
+                nodes = JSON.parse(dataElement.dataset.nodes || '[]');
+                edges = JSON.parse(dataElement.dataset.edges || '[]');
+                graphType = dataElement.dataset.graphType || 'undirected';
+            } catch (error) {
+                console.error("Ошибка парсинга данных:", error);
+                return;
+            }
+            
+            if (!nodes || nodes.length === 0) {
+                const cyContainer = document.getElementById('cy');
+                if (cyContainer) {
+                    cyContainer.innerHTML = 
+                        '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #666;">' +
+                        '<p>Граф не содержит вершин</p>' +
+                        '</div>';
+                }
+                updateStatus('Граф пуст');
+                return;
+            }
+            
+            const elements = [];
+            nodes.forEach((node, index) => {
+                elements.push({
+                    data: { id: node.id, label: node.label, color: currentVertexColor },
+                    position: { x: 100 + (index % 5) * 120, y: 100 + Math.floor(index / 5) * 120 }
+                });
+            });
+            
+            edges.forEach((edge, index) => {
+                const edgeData = {
+                    data: { id: edge.id, source: edge.source, target: edge.target, color: currentEdgeColor }
+                };
+                if (edge.weight !== undefined && edge.weight !== null) {
+                    edgeData.data.weight = edge.weight;
+                    edgeData.data.label = edge.weight.toString();
+                }
+                elements.push(edgeData);
+            });
+            
+            try {
+                cy = window.cy = cytoscape({
+                    container: document.getElementById('cy'),
+                    elements: elements,
+                    style: [
+                        {
+                            selector: 'node',
+                            style: { 'label': 'data(label)', 'background-color': 'data(color)', 'text-valign': 'center', 'color': '#000', 'font-size': 12, 'width': 40, 'height': 40 }
+                        },
+                        {
+                            selector: 'edge',
+                            style: { 'width': 2, 'line-color': 'data(color)', 'curve-style': 'bezier', 'label': 'data(label)', 'text-rotation': 'autorotate', 'text-margin-y': -10, 'font-size': 10, 'color': '#333', 'font-weight': 'bold' }
+                        },
+                        {
+                            selector: '.directed',
+                            style: { 'target-arrow-color': 'data(color)', 'target-arrow-shape': 'triangle', 'curve-style': 'bezier', 'target-arrow-fill': 'filled' }
+                        },
+                        {
+                            selector: '.selected',
+                            style: { 'background-color': '#FFAB40', 'line-color': '#FF9800' }
+                        }
+                    ],
+                    layout: { name: 'preset', animate: false },
+                    userPanningEnabled: true, userZoomingEnabled: true, minZoom: 0.1, maxZoom: 5, wheelSensitivity: 0.2, panningEnabled: true, zoomingEnabled: true
+                });
+                
+                if (isMatrixAllowed()) {
+                    cy.on('add remove data', 'node, edge', () => {
+                        console.log("Граф изменился!");
+                        updateMatrix();
+                    });
+                }
+
+                setInitialGraphType();
+                setupEventHandlers();
+                
+                setTimeout(() => {
+                    cy.fit();
+                    if (isMatrixAllowed()) updateMatrix();
+                    updateStatus('Граф построен. Редактирование доступно.');
+                }, 100);
+                
+            } catch (error) {
+                console.error("Ошибка создания графа:", error);
+                updateStatus('Ошибка при создании графа');
+            }
+        }
+        
+        function setupEventHandlers() {
+            document.getElementById('add-node-btn').onclick = () => { mode = 'add-node'; firstNode = null; updateStatus('Добавление вершин.'); };
+            document.getElementById('add-edge-btn').onclick = () => { mode = 'add-edge'; firstNode = null; updateStatus('Добавление рёбер.'); };
+            document.getElementById('remove-node-btn').onclick = () => { mode = 'remove-node'; updateStatus('Удаление вершин.'); };
+            document.getElementById('remove-edge-btn').onclick = () => { mode = 'remove-edge'; updateStatus('Удаление рёбер.'); };
+            document.getElementById('rename-node-btn').onclick = () => { mode = 'rename-node'; updateStatus('Переименовать вершину'); };
+            document.getElementById('change-vertex-color-btn').onclick = () => { mode = 'change-vertex-color'; currentVertexColor = document.getElementById('vertex-color').value; updateStatus('Изменение цвета вершин.'); };
+            document.getElementById('change-edge-color-btn').onclick = () => { mode = 'change-edge-color'; currentEdgeColor = document.getElementById('edge-color').value; updateStatus('Изменение цвета рёбер.'); };
+            
+            document.getElementById('change-weight-btn').onclick = () => {
+                currentWeight = parseFloat(document.getElementById('weight-input').value) || 1;
+                mode = 'change-weight';
+                updateStatus(`Изменение веса (новый вес: ${currentWeight}).`);
+            };
+            
+            document.getElementById('remove-weight-btn').onclick = () => { mode = 'remove-weight'; updateStatus('Удаление веса.'); };
+            document.getElementById('vertex-color').addEventListener('input', function() { currentVertexColor = this.value; });
+            document.getElementById('edge-color').addEventListener('input', function() { currentEdgeColor = this.value; });
+            document.getElementById('weight-input').addEventListener('input', function() { currentWeight = parseFloat(this.value) || 1; });
+            
+            document.getElementById('make-directed').onclick = () => {
+                isDirected = true;
+                applyDirectedUI();
+                updateStatus('Граф установлен как ориентированный.');
+                if (isMatrixAllowed()) updateMatrix(); 
+            };
+            
+            document.getElementById('make-undirected').onclick = () => {
+                isDirected = false;
+                applyDirectedUI();
+                updateStatus('Граф установлен как неориентированный.');
+                if (isMatrixAllowed()) updateMatrix();
+            };
+            
+            document.getElementById('clear-btn').onclick = () => {
+                if (cy.elements().length > 0) {
+                    if (confirm('Вы уверены, что хотите очистить весь граф?')) {
+                        cy.elements().remove();
+                        mode = null; firstNode = null;
+                        updateStatus('Граф очищен.');
+                        if (isMatrixAllowed()) updateMatrix();
+                    }
+                }
+            };
+           
+            document.getElementById('saveMatrixBtn').onclick = function() {
+                if (!currentMatrix || !currentMatrixType) {
+                    alert('Нет данных для сохранения.');
+                    return;
+                }
+                let filename = ''; let content = '';
+                switch (currentMatrixType) {
+                    case 'adj': filename = 'adjacency_matrix.txt'; content = matrixToText(currentMatrix); break;
+                    case 'inc': filename = 'incidence_matrix.txt'; content = matrixToText(currentMatrix); break;
+                    case 'paths_count': filename = 'paths_count.txt'; content = matrixToText(currentMatrix); break;
+                    case 'paths': 
+                        filename = 'paths.txt'; 
+                        content = currentMatrix.map(row => row.map(cell => Array.isArray(cell) ? cell.join(',') : cell).join(' ')).join('\n');
+                        break;
+                    case 'reach': filename = 'reachability_matrix.txt'; content = matrixToText(currentMatrix); break;
+                    case 'kirch': filename = 'kirchhoff_matrix.txt'; content = matrixToText(currentMatrix); break;
+                    case 'weight': 
+                        filename = 'weight_matrix.txt'; 
+                        content = matrixToText(currentMatrix); 
+                        break;
+                    case 'floyd': 
+                        filename = 'floyd_warshall_matrix.txt'; 
+                        content = matrixToText(currentMatrix); 
+                        break;
+                }
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = filename; a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            function matrixToText(matrix) { return matrix.map(row => row.join(' ')).join('\n'); }
+
+            cy.on('tap', function (event) {
+                if (mode === 'add-node' && event.target === cy) {
+                    const nodeId = `V${getNextVertexNumber()}`;
+                    cy.add({ data: { id: nodeId, label: nodeId, color: currentVertexColor }, position: event.position });
+                    updateStatus(`Добавлена вершина: ${nodeId}`);
+                }
+                if (!['add-edge', 'remove-node', 'remove-edge', 'change-vertex-color', 'change-edge-color', 'change-weight', 'remove-weight'].includes(mode) && event.target === cy) {
+                    cy.elements().removeClass('selected');
+                }
+            });
+            
+            cy.on('tap', 'node', function (event) {
+                const node = event.target;
+                if (mode === 'rename-node') {
+                    const oldName = node.data('label') || node.id();
+                    const newName = prompt('Новое имя вершины:', oldName);
+                    if (newName && newName.trim() !== '') {
+                        node.data('label', newName.trim());
+                        updateStatus(`Вершина переименована: ${oldName} → ${newName}`);
+                    }
+                    return;
+                }
+                if (mode === 'add-edge') {
+                    if (!firstNode) {
+                        firstNode = node; firstNode.addClass('selected');
+                        updateStatus(`Выбрана первая вершина. Выберите вторую.`);
+                    } else {
+                       let source = firstNode.id(); let target = node.id();
+                        if (!isDirected && source > target) [source, target] = [target, source];
+
+                        const edgeData = {
+                            data: { source: source, target: target, color: currentEdgeColor, weight: currentWeight },
+                            classes: isDirected ? 'directed' : ''
+                        };
+                        if (currentWeight !== 1) edgeData.data.label = currentWeight.toString();
+                        cy.add(edgeData);
+                        updateStatus(`Добавлено ребро: ${source} → ${target}`);
+                        
+                        firstNode.removeClass('selected'); firstNode = null;
+                    }
+                } else if (mode === 'remove-node') {
+                    node.remove(); updateStatus(`Вершина удалена: ${node.id()}`);
+                } else if (mode === 'change-vertex-color') {
+                    node.data('color', currentVertexColor); updateStatus(`Цвет вершины изменён`);
+                } else {
+                    cy.elements().removeClass('selected'); node.addClass('selected');
+                }
+            });
+            
+            cy.on('tap', 'edge', function (event) {
+                const edge = event.target;
+                if (mode === 'remove-edge') {
+                    edge.remove(); updateStatus(`Ребро удалено`);
+                } else if (mode === 'change-edge-color') {
+                    edge.data('color', currentEdgeColor); updateStatus(`Цвет ребра изменён`);
+                } else if (mode === 'change-weight') {
+                    edge.data('weight', currentWeight); edge.data('label', currentWeight.toString());
+                    updateStatus(`Вес ребра изменён на ${currentWeight}`);
+                } else if (mode === 'remove-weight') {
+                    edge.data('weight', null); edge.data('label', ''); updateStatus(`Вес ребра удалён`);
+                } else {
+                    cy.elements().removeClass('selected'); edge.addClass('selected');
+                }
+            });
+            
+            cy.on('dbltap', 'node, edge', function (event) {
+                event.target.remove();
+            });
+            
+            cy.nodes().grabify();
+        }
+        
+        document.addEventListener('DOMContentLoaded', initGraph);
+
+        document.getElementById('layoutBtn').addEventListener('click', () => {
+            if (!cy) return;
+            
+            cy.layout({
+                name: 'cose',
+                animate: true,          
+                animationDuration: 500, 
+                randomize: false,
+                fit: true, 
+                nodeRepulsion: 10000,
+                idealEdgeLength: 100  
+            }).run();
+        });
+
+        function exportPNG() {
+            const png = cy.png({ full: true, scale: 2 });
+            downloadFile('graph.png', png, true);
+        }
+
+        function exportSVG() {
+            const svg = cy.svg({ full: true });
+            const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8;' });
+            downloadFile('graph.svg', URL.createObjectURL(blob));
+        }
+
+        function exportJSON() {
+            cy.nodes().forEach(node => {
+                const currentLabel = node.data('label');
+                if (!currentLabel || currentLabel === node.id()) {
+                }
+                if (!node.data('label')) node.data('label', node.id());
+            });
+            const data = { directed: isDirected, elements: cy.json().elements };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            downloadFile('graph.json', URL.createObjectURL(blob));
+        }
+
+        function exportTXT() {
+            let text = `#directed=${isDirected ? 1 : 0}\n`;
+            cy.nodes().forEach(n => {
+                const label = n.data('label') || n.id();
+                text += `#node ${n.id()} ${n.data('color') || currentVertexColor} ${Math.round(n.position().x)} ${Math.round(n.position().y)} ${label}\n`;
+            });
+            cy.edges().forEach(e => {
+                const w = (e.data('weight') != null) ? e.data('weight') : 1;
+                text += `#edge ${e.source().id()} ${e.target().id()} ${w} ${e.data('color') || currentEdgeColor}\n`;
+            });
+            const blob = new Blob([text], { type: 'text/plain' });
+            downloadFile('graph.txt', URL.createObjectURL(blob));
+        }
+
+        function downloadFile(filename, url, isBase64 = false) {
+            const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+            if (!isBase64) URL.revokeObjectURL(url);
+        }
+
+        function updateMatrix() {
+            if (!cy) return;
+
+            const type = pageMatrixType;
+            if (!type || type === 'none') return;
+
+            const nodesData = getNodesSorted();
+            const nodeIds = nodesData.map(n => n.id);
+            const nodeLabels = nodesData.map(n => n.label);
+            const container = document.getElementById('matrix-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (nodeIds.length === 0) {
+                container.innerHTML = '<div style="padding:10px; text-align:center;">Граф не содержит вершин.</div>';
+                return;
+            }
+
+            let matrix = null;
+            let rowHeaders = nodeLabels;
+            let colHeaders = nodeLabels;
+
+            switch (type) {
+                case 'adj':
+                    matrix = buildAdjacencyMatrix(nodeIds);
+                    renderMatrix(rowHeaders, matrix);
+                    break;
+                case 'inc':
+                    matrix = buildIncidenceMatrix(nodeIds);
+                    colHeaders = getIncidenceEdgeHeaders();
+                    renderMatrixWithHeaders(rowHeaders, colHeaders, matrix);
+                    break;
+                case 'q_paths':
+                    matrix = buildPathsCountMatrix(nodeIds, currentPathLength);
+                    renderMatrix(rowHeaders, matrix);
+                    break;
+                case 'paths':
+                    matrix = buildPathsMatrix(nodeIds, currentPathLength);
+                    renderMatrix(rowHeaders, matrix);
+                    break;
+                case 'reach':
+                    matrix = buildReachabilityMatrixWarshall(nodeIds);
+                    renderMatrix(rowHeaders, matrix);
+                    break;
+                case 'kirch':
+                    if (isDirected) {
+                        container.innerHTML = `
+                            <div style="padding:10px; text-align:center;">
+                                Граф ориентированный, матрицу Кирхгофа построить невозможно.
+                            </div>
+                        `;
+                        return;
+                    }
+                    matrix = buildKirchhoffMatrix(nodeIds);
+                    renderMatrix(rowHeaders, matrix);
+                    break;
+                case 'weight':
+                    matrix = buildWeightMatrix(nodeIds);
+                    renderMatrix(rowHeaders, matrix);
+                    break;
+                case 'floyd':
+                    matrix = buildFloydWarshall(nodeIds);
+                    renderMatrix(rowHeaders, matrix);
+                    break;
+                default:
+                    console.warn('Неизвестный тип матрицы:', type);
+                    return;
+            }
+        }
+
+        function buildAdjacencyMatrixUnweighted(nodes) {
+            const n = nodes.length;
+            const matrix = Array.from({ length: n }, () => Array(n).fill(0));
+
+            cy.edges().forEach(edge => {
+                const i = nodes.indexOf(edge.source().id());
+                const j = nodes.indexOf(edge.target().id());
+
+                if (i !== -1 && j !== -1) {
+                    matrix[i][j] += 1; 
+                    if (!isDirected && i !== j) matrix[j][i] += 1;
+                }
+            });
+
+            return matrix;
+        }
+        
+        function renderMatrix(nodes, matrix) {
+            console.log("ОБНОВЛЯЮ МАТРИЦУ простой рендер")
+            const container = document.getElementById('matrix-container');
+            if (!container) return;
+
+            const table = document.createElement('table');
+            table.className = 'table table-bordered';
+
+            const thead = document.createElement('thead');
+            const headerRow = document.createElement('tr');
+            headerRow.innerHTML = '<th></th>' + nodes.map(n => `<th>${n}</th>`).join('');
+            thead.appendChild(headerRow);
+            table.appendChild(thead);
+
+            const tbody = document.createElement('tbody');
+            for (let i = 0; i < matrix.length; i++) {
+                const row = document.createElement('tr');
+                let rowHtml = `<th>${nodes[i]}</th>`;
+                for (let j = 0; j < matrix[i].length; j++) {
+                    let cell = matrix[i][j];
+                    if (Array.isArray(cell)) cell = cell.length ? cell.join(', ') : '-';
+                    rowHtml += `<td>${cell}</td>`;
+                }
+                row.innerHTML = rowHtml;
+                tbody.appendChild(row);
+            }
+            table.appendChild(tbody);
+            container.appendChild(table);
+        } 
+
+        function renderMatrixWithHeaders(rowHeaders, colHeaders, matrix) {
+            console.log("ОБНОВЛЯЮ МАТРИЦУ")
+            const container = document.getElementById('matrix-container');
+            if (!container) return;
+
+            let html = `
+                <table class="table table-bordered table-sm text-center"">
+                    <thead>
+                        <tr><th></th>${colHeaders.map(h => `<th>${h}</th>`).join('')}</tr>
+                    </thead>
+                    <tbody>
+            `;
+            for (let i = 0; i < rowHeaders.length; i++) {
+                html += `<tr><th>${rowHeaders[i]}</th>`;
+                for (let j = 0; j < colHeaders.length; j++) {
+                    let cell = matrix[i][j] ?? 0;
+                    if (Array.isArray(cell)) cell = cell.length ? cell.join(', ') : '-';
+                    html += `<td>${cell}</td>`;
+                }
+                html += `</tr>`;
+            }
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+        }
+
+        function buildAdjacencyMatrix(nodes) {
+            const n = nodes.length;
+            const matrix = Array.from({ length: n }, () => Array(n).fill(0));
+            cy.edges().forEach(edge => {
+                const i = nodes.indexOf(edge.source().id());
+                const j = nodes.indexOf(edge.target().id());
+                if (i !== -1 && j !== -1) {
+                    const w = edge.data('weight') || 1;
+                    matrix[i][j] += w; 
+                    if (!isDirected && i !== j) matrix[j][i] += w;
+                }
+            });
+            return matrix;
+        }
+
+        function buildReachabilityMatrixWarshall(nodes) {
+            const n = nodes.length;
+            const R = Array.from({ length: n }, () => Array(n).fill(0));
+            for (let i = 0; i < n; i++) R[i][i] = 1;
+            cy.edges().forEach(edge => {
+                const i = nodes.indexOf(edge.source().id());
+                const j = nodes.indexOf(edge.target().id());
+                if (i !== -1 && j !== -1) {
+                    R[i][j] = 1;
+                    if (!isDirected) R[j][i] = 1;
+                }
+            });
+            for (let k = 0; k < n; k++) {
+                for (let i = 0; i < n; i++) {
+                    if (!R[i][k]) continue;
+                    for (let j = 0; j < n; j++) {
+                        if (R[i][j]) continue;
+                        if (R[k][j]) R[i][j] = 1;
+                    }
+                }
+            }
+            return R;
+        }
+
+    function buildWeightMatrix(nodeIds) {
+        const n = nodeIds.length;
+        const matrix = [];
+        for (let i = 0; i < n; i++) {
+            matrix[i] = [];
+            for (let j = 0; j < n; j++) {
+                if (i === j) {
+                    matrix[i][j] = 0;
+                    continue;
+                }
+                const edge = cy.edges().filter(e =>
+                    (e.source().id() === nodeIds[i] && e.target().id() === nodeIds[j]) ||
+                    (!isDirected && e.source().id() === nodeIds[j] && e.target().id() === nodeIds[i])
+                )[0];
+                if (edge) {
+                    const weight = edge.data('weight');
+                    matrix[i][j] = weight !== undefined ? weight : 1;
+                } else {
+                    matrix[i][j] = '∞';
+                }
+            }
+        }
+        return matrix;
+    }
+
+    function buildFloydWarshall(nodeIds) {
+        const n = nodeIds.length;
+        function getLabel(id) {
+            const node = cy.getElementById(id);
+            return node.data('label') || id;
+        }
+
+        const dist = Array.from({ length: n }, () => Array(n).fill(Infinity));
+        const next = Array.from({ length: n }, () => Array(n).fill(null));
+
+        for (let i = 0; i < n; i++) dist[i][i] = 0;
+
+        cy.edges().forEach(edge => {
+            const u = nodeIds.indexOf(edge.source().id());
+            const v = nodeIds.indexOf(edge.target().id());
+            if (u !== -1 && v !== -1 && u !== v) {
+                let w = edge.data('weight');
+                w = (w !== undefined && w !== null) ? parseFloat(w) : 1;
+                if (w < dist[u][v]) {
+                    dist[u][v] = w;
+                    next[u][v] = v;
+                }
+                if (!isDirected) {
+                    if (w < dist[v][u]) {
+                        dist[v][u] = w;
+                        next[v][u] = u;
+                    }
+                }
+            }
+        });
+
+        for (let k = 0; k < n; k++) {
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    if (dist[i][k] === Infinity || dist[k][j] === Infinity) continue;
+                    if (dist[i][k] + dist[k][j] < dist[i][j]) {
+                        dist[i][j] = dist[i][k] + dist[k][j];
+                        next[i][j] = next[i][k];
+                    }
+                }
+            }
+        }
+
+        const matrix = [];
+        for (let i = 0; i < n; i++) {
+            matrix[i] = [];
+            for (let j = 0; j < n; j++) {
+                if (dist[i][j] === Infinity) {
+                    matrix[i][j] = '∞';
+                } else if (i === j) {
+                    matrix[i][j] = '0';
+                } else {
+                    const nextId = nodeIds[next[i][j]];
+                    const nextLabel = getLabel(nextId);
+                    matrix[i][j] = `${dist[i][j]} (${nextLabel})`;
+                }
+            }
+        }
+        return matrix;
+    }
+
+    function buildKirchhoffMatrix(nodes) {
+        const n = nodes.length;
+        const L = Array.from({ length: n }, () => Array(n).fill(0));
+
+        cy.edges().forEach(edge => {
+            const i = nodes.indexOf(edge.source().id());
+            const j = nodes.indexOf(edge.target().id());
+                
+            if (i === -1 || j === -1 || i === j) return;
+                
+            L[i][j] -= 1;
+            L[i][i] += 1;
+            if (!isDirected) {
+                L[j][i] -= 1;
+                L[j][j] += 1;
+            }
+        });
+
+        return L;
+    }
+
+    function countConnectedComponents(nodes) {
+        const n = nodes.length;
+        if (n === 0) return 0;
+        const adj = new Map();
+        nodes.forEach(v => adj.set(v, []));
+
+        cy.edges().forEach(edge => {
+            const a = edge.source().id();
+            const b = edge.target().id();
+            if (!adj.has(a) || !adj.has(b)) return;
+            adj.get(a).push(b);
+            adj.get(b).push(a);
+        });
+
+        const visited = new Set();
+        let components = 0;
+
+        for (const v of nodes) {
+            if (visited.has(v)) continue;
+            components++;
+            const stack = [v];
+            visited.add(v);
+
+            while (stack.length) {
+                const cur = stack.pop();
+                for (const nei of adj.get(cur)) {
+                    if (!visited.has(nei)) {
+                        visited.add(nei);
+                        stack.push(nei);
+                    }
+                }
+            }
+        }
+        return components;
+    }
+
+    function getIncidenceEdgeHeaders() {
+        const edges = cy.edges().sort((a, b) => {
+            const aId = a.data('source') + ':' + a.data('target');
+            const bId = b.data('source') + ':' + b.data('target');
+            return aId.localeCompare(bId);
+        });
+        return edges.map(e => {
+            const sourceNode = cy.getElementById(e.source().id());
+            const targetNode = cy.getElementById(e.target().id());
+            const sLabel = sourceNode.data('label') || sourceNode.id();
+            const tLabel = targetNode.data('label') || targetNode.id();
+            return isDirected ? `${sLabel}→${tLabel}` : `${sLabel}—${tLabel}`;
+        });
+    }
+
+    function buildIncidenceMatrix(nodes) {
+        const edges = cy.edges().sort((a, b) => {
+            const aId = a.data('source') + ':' + a.data('target');
+            const bId = b.data('source') + ':' + b.data('target');
+            return aId.localeCompare(bId);
+        });
+        const n = nodes.length;
+        const m = edges.length;
+        const matrix = Array.from({ length: n }, () => Array(m).fill(0));
+
+        edges.forEach((edge, j) => {
+            const s = edge.source().id();
+            const t = edge.target().id();
+            const i1 = nodes.indexOf(s);
+            const i2 = nodes.indexOf(t);
+            if (i1 === -1 || i2 === -1) return;
+
+            const w = edge.data('weight') || 1;
+            if (s === t) {
+                matrix[i1][j] = w; 
+            } else if (isDirected) {
+                matrix[i1][j] = -w; matrix[i2][j] = w;
+            } else {
+                matrix[i1][j] = w; matrix[i2][j] = w;
+            }
+        });
+        return matrix;
+    }
+
+    
+    function buildPathsCountMatrix(nodes, k) {
+        const n = nodes.length;
+        let A = Array.from({ length: n }, () => Array(n).fill(0));
+        cy.edges().forEach(edge => {
+            const i = nodes.indexOf(edge.source().id());
+            const j = nodes.indexOf(edge.target().id());
+            if (i !== -1 && j !== -1) {
+                A[i][j] += 1;
+                if (!isDirected && i !== j) A[j][i] += 1;
+            }
+        });
+
+        let result = A;
+        for (let step = 1; step < k; step++) {
+            result = multiplyMatrices(result, A);
+        }
+        return result;
+    }
+
+    function multiplyMatrices(A, B) {
+        const n = A.length;
+        const C = Array.from({ length: n }, () => Array(n).fill(0));
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                let sum = 0;
+                for (let t = 0; t < n; t++) sum += A[i][t] * B[t][j];
+                C[i][j] = sum;
+            }
+        }
+        return C;
+    }
+
+    function buildPathsMatrix(nodeIds, k) {
+        const n = nodeIds.length;
+        function getLabel(id) {
+            const node = cy.getElementById(id);
+            return node.data('label') || id;
+        }
+
+        let paths = Array.from({ length: n }, () => Array.from({ length: n }, () => []));
+        cy.edges().forEach(edge => {
+            const i = nodeIds.indexOf(edge.source().id());
+            const j = nodeIds.indexOf(edge.target().id());
+            if (i !== -1 && j !== -1) {
+                const sourceLabel = getLabel(nodeIds[i]);
+                const targetLabel = getLabel(nodeIds[j]);
+                paths[i][j].push(sourceLabel + '-' + targetLabel);
+                if (!isDirected && i !== j) {
+                    paths[j][i].push(targetLabel + '-' + sourceLabel);
+                }
+            }
+        });
+
+        let current = paths;
+        for (let step = 2; step <= k; step++) {
+            let next = Array.from({ length: n }, () => Array.from({ length: n }, () => []));
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    for (let t = 0; t < n; t++) {
+                        if (current[i][t].length && paths[t][j].length) {
+                            for (let p1 of current[i][t]) {
+                                for (let p2 of paths[t][j]) {
+                                    const p2parts = p2.split('-');
+                                    p2parts.shift();
+                                    next[i][j].push(p1 + '-' + p2parts.join('-'));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            current = next;
+        }
+        return current;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('matrixModal');
+        if (modal && modal.parentElement !== document.body) {
+            document.body.appendChild(modal);
+        }
+        
+        const toggle = document.getElementById('matricesSubmenuToggle');
+        if (!toggle) return;
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault(); e.stopPropagation();
+            const parent = toggle.closest('.dropdown-submenu');
+            const submenu = parent ? parent.querySelector('.submenu') : null;
+            if (!submenu) return;
+            submenu.classList.toggle('show');
+        });
+        document.addEventListener('click', () => {
+            const sub = document.querySelector('.dropdown-submenu .submenu');
+            if (sub) sub.classList.remove('show');
+        });
+    });
+
+    function fitMatrixModalToContent() {
+        const modal = document.getElementById('matrixModal');
+        if (!modal) return;
+
+        const dialog = modal.querySelector('.modal-dialog');
+        const content = modal.querySelector('.modal-content');
+        const body = modal.querySelector('.modal-body');
+
+        if (!dialog || !content || !body) return;
+
+        const table = body.querySelector('table');
+        if (!table) return;
+
+        dialog.style.maxWidth = 'none';
+        dialog.style.width = 'auto';
+        dialog.style.display = 'inline-block';
+
+        requestAnimationFrame(() => {
+            const tableRect = table.getBoundingClientRect();
+            const cs = window.getComputedStyle(body);
+            const padL = parseFloat(cs.paddingLeft) || 0;
+            const padR = parseFloat(cs.paddingRight) || 0;
+            const safety = 24;
+            const desiredWidth = Math.ceil(tableRect.width + padL + padR + safety);
+            dialog.style.width = desiredWidth + 'px';
+        });
+    }
+
+    function showInfoModal(title, messageHtml) {
+        document.getElementById('matrixModalLabel').textContent = title;
+        document.getElementById('matrixModalBody').innerHTML = `
+            <div style="text-align:left; font-size:14px; padding:10px;">
+            ${messageHtml}
+            </div>
+        `;
+        const leftPanel = document.querySelector('.left-panel');
+        const modal = document.getElementById('matrixModal');
+        const dialog = modal.querySelector('.modal-dialog');
+
+        if (leftPanel) {
+            const panelRect = leftPanel.getBoundingClientRect();
+            const leftCoord = panelRect.right + window.scrollX + 8;
+            const topCoord = (panelRect.top + (panelRect.height / 2)) + window.scrollY;
+            dialog.style.setProperty('left', leftCoord + 'px', 'important');
+            dialog.style.setProperty('top', topCoord + 'px', 'important');
+            modal.style.display = 'block';
+        }
+
+        setTimeout(() => {
+            dialog.style.maxWidth = 'none';
+            dialog.style.width = '420px';
+        }, 0);
+
+        $('#matrixModal').modal('show');
+    }
+
+    function calcDeterminant(matrix) {
+        const n = matrix.length;
+        if (n === 0) return 0;
+        if (n === 1) return matrix[0][0];
+        if (n === 2) return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+
+        let mat = matrix.map(row => [...row]);
+        let det = 1;
+
+        for (let i = 0; i < n; i++) {
+            let pivotIdx = i;
+            for (let j = i + 1; j < n; j++) {
+                if (Math.abs(mat[j][i]) > Math.abs(mat[pivotIdx][i])) {
+                    pivotIdx = j;
+                }
+            }
+            if (Math.abs(mat[pivotIdx][i]) < 1e-9) return 0; 
+            if (pivotIdx !== i) {
+                let temp = mat[i]; mat[i] = mat[pivotIdx]; mat[pivotIdx] = temp;
+                det *= -1; 
+            }
+            det *= mat[i][i];
+            for (let j = i + 1; j < n; j++) {
+                let factor = mat[j][i] / mat[i][i];
+                for (let k = i; k < n; k++) {
+                    mat[j][k] -= factor * mat[i][k];
+                }
+            }
+        }
+        return Math.round(Math.abs(det)); 
+    }
+
+    function showMatrixModal(type) {
+        const nodesData = getNodesSorted();
+        if (nodesData.length === 0) {
+            alert('Граф не содержит вершин.');
+            return;
+        }
+        const nodeIds = nodesData.map(n => n.id);
+        const nodeLabels = nodesData.map(n => n.label);
+
+        if (type === 'kirch' && isDirected) {
+            showInfoModal(
+                'Матрица Кирхгофа (Лапласа)',
+                'Граф ориентированный, матрицу Кирхгофа построить невозможно.'
+            );
+            return;
+        }
+
+        let matrix, rowHeaders, colHeaders, title;
+        let extraInfoHtml = '';
+        
+        currentMatrixType = type;
+
+        switch (type) {
+            case 'adj':
+                matrix = buildAdjacencyMatrix(nodeIds); 
+                rowHeaders = nodeLabels; colHeaders = nodeLabels;
+                title = 'Матрица смежности';
+                break;
+            case 'inc':
+                matrix = buildIncidenceMatrix(nodeIds);
+                rowHeaders = nodeLabels; colHeaders = getIncidenceEdgeHeaders(); 
+                title = 'Матрица инцидентности';
+                break;
+            case 'paths_count':
+                const k = prompt('Введите длину путей (k):', '2');
+                if (k === null) return;
+                matrix = buildPathsCountMatrix(nodeIds, parseInt(k));
+                rowHeaders = nodeLabels; colHeaders = nodeLabels;
+                title = `Количество путей длины ${k}`;
+                break;
+            case 'paths':
+                const kp = prompt('Введите длину путей (k):', '2');
+                if (kp === null) return;
+                matrix = buildPathsMatrix(nodeIds, parseInt(kp));
+                rowHeaders = nodeLabels; colHeaders = nodeLabels;
+                title = `Пути длины ${kp}`;
+                break;
+            case 'reach':
+                matrix = buildReachabilityMatrixWarshall(nodeIds);
+                rowHeaders = nodeLabels; colHeaders = nodeLabels;
+                title = 'Матрица достижимости (Уоршелл)';
+                break;
+            case 'kirch':
+                matrix = buildKirchhoffMatrix(nodeIds);
+                rowHeaders = nodeLabels; colHeaders = nodeLabels;
+                title = 'Матрица Кирхгофа (Лапласа)';
+
+                const vertexCount = nodeIds.length;
+                const components = countConnectedComponents(nodeIds);
+                const rankKirchhoff = vertexCount - components;
+                let spanningTreesHtml = '';
+                if (components === 1) {
+                    let spanningTrees = 0;
+                    if (vertexCount === 1) {
+                        spanningTrees = 1; 
+                    } else {
+                        const minor = [];
+                        for (let i = 1; i < vertexCount; i++) {
+                            minor.push(matrix[i].slice(1));
+                        }
+                        spanningTrees = calcDeterminant(minor);
+                    }
+                    spanningTreesHtml = `<div><strong>Количество остовных деревьев:</strong> ${spanningTrees}</div>`;
+                } else {
+                    spanningTreesHtml = `<div><strong>Количество остовных деревьев:</strong> 0 (граф несвязный)</div>`;
+                }
+                extraInfoHtml = `
+                <div style="text-align:left; font-size:14px; margin-bottom:10px;">
+                    <div><strong>Число вершин:</strong> ${vertexCount}</div>
+                    <div><strong>Число компонент связности:</strong> ${components}</div>
+                    <div><strong>Ранг матрицы Кирхгофа:</strong> ${rankKirchhoff}</div>
+                    ${spanningTreesHtml}
+                </div>
+                `;
+                break;
+        case 'weight':
+            matrix = buildWeightMatrix(nodeIds);
+            rowHeaders = nodeLabels; colHeaders = nodeLabels;
+            title = 'Весовая матрица';
+            break;
+            
+        case 'floyd':
+            matrix = buildFloydWarshall(nodeIds);
+            rowHeaders = nodeLabels; colHeaders = nodeLabels;
+            title = 'Матрица Флойда-Уоршелла';
+            extraInfoHtml = `
+                <div style="text-align:left; font-size:13px; margin-bottom:10px; color: #555;">
+                    <em>Формат ячейки: <strong>Кратчайшее расстояние (Следующая вершина на пути)</strong></em>
+                </div>
+            `;
+            break;
+        }
+
+        currentMatrix = matrix;
+        currentMatrixHeaders = rowHeaders;
+        currentMatrixRowHeaders = rowHeaders;
+        currentMatrixColHeaders = colHeaders;
+
+        let html = '';
+
+        if (extraInfoHtml) html += extraInfoHtml;
+        
+        html += '<table class="matrix-table">'; 
+        html += '<thead><tr><th></th>';
+
+        for (let h of colHeaders) {
+            html += `<th>${h}</th>`;
+        }
+
+        html += '</tr></thead><tbody>';
+
+        for (let i = 0; i < matrix.length; i++) {
+            html += `<tr><th>${rowHeaders[i]}</th>`;
+            for (let j = 0; j < matrix[i].length; j++) {
+                let cell = matrix[i][j];
+                if (Array.isArray(cell)) {
+                    cell = cell.length ? cell.join(', ') : '-';
+                }
+                html += `<td>${cell}</td>`;
+            }
+            html += '</tr>';
+        }
+        html += '</tbody></table>';
+
+        document.getElementById('matrixModalBody').innerHTML = html;
+        document.getElementById('matrixModalLabel').textContent = title;
+
+        const leftPanel = document.querySelector('.left-panel');
+        const modal = document.getElementById('matrixModal');
+        const dialog = modal.querySelector('.modal-dialog');
+
+        if (leftPanel) {
+            const panelRect = leftPanel.getBoundingClientRect();
+            const leftCoord = panelRect.right + window.scrollX + 8;
+            const topCoord = (panelRect.top + (panelRect.height / 2)) + window.scrollY;
+            dialog.style.setProperty('left', leftCoord + 'px', 'important');
+            dialog.style.setProperty('top', topCoord + 'px', 'important');
+            modal.style.display = 'block'; 
+        }
+
+        setTimeout(() => {
+            fitMatrixModalToContent();
+        }, 0);
+
+        $('#matrixModal').modal('show');
+    }
+
+    function getNodesSorted() {
+        return cy.nodes().map(node => ({
+            id: node.id(),
+            label: node.data('label') || node.id()
+        })).sort((a, b) => {
+            const aNum = parseInt(a.id.replace(/[^0-9]/g, '')) || 0;
+            const bNum = parseInt(b.id.replace(/[^0-9]/g, '')) || 0;
+            return aNum - bNum;
+        });
+    }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
